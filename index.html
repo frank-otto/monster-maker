@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Monster Maker – build a 3D monster and bring it to life</title>
+<meta name="description" content="A mad-scientist lab in a stormy gothic tower: build your own 3D monster from mix-and-match parts, pull the lever and bring it to life with lightning. Then win the Monster Showdown or fill Monster Orders against the clock.">
+<meta name="theme-color" content="#070a0c">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%A7%AA%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-state="menu">
+<canvas id="game" aria-label="Monster Maker game"></canvas>
+<div id="flash"></div>
+<div id="pops"></div>
+<div id="vmarks"></div>
+<div id="banner"></div>
+<div id="hud">
+  <div class="chip" id="hScoreBox"><small data-t="scoreL">Score</small><b id="hScore">0</b></div>
+  <div class="chip" id="hModeBox"><b id="hMode"></b></div>
+  <div class="chip" id="hHeartsBox" style="display:none"><b id="hHearts"></b></div>
+</div>
+<div id="hint"></div>
+<div id="top">
+  <button id="btnQuit" class="pill" aria-label="Finish">✕</button>
+  <button id="btnQ" class="pill">⚙</button>
+  <button id="btnSound" class="pill on" aria-label="Sound">🔊</button>
+  <button id="btnLang" class="pill">DE</button>
+</div>
+<div id="toast"></div>
+<section id="menu" class="panel show">
+  <h1><span class="fl">🧪</span> Monster Maker</h1>
+  <p class="sub" data-t="sub"></p>
+  <button id="btnPlay" class="big"><span data-t="play"></span><small data-t="playSub"></small><em id="bestShow"></em></button>
+  <button id="btnOrder" class="big alt"><span data-t="orderBtn"></span><small data-t="orderSub"></small><em id="bestOrder"></em></button>
+  <div id="diff" role="group"><button data-d="easy" data-t="easy"></button><button data-d="medium" data-t="medium"></button><button data-d="hard" data-t="hard"></button></div>
+  <div class="row"><button id="btnLab" data-t="labBtn"></button><button id="btnKids" class="toggle" aria-pressed="false"><i></i><span data-t="kidsMode"></span></button></div>
+  <p class="tip kidsTip" data-t="kidsHint"></p>
+  <p class="tip keys" data-t="keysHint"></p>
+  <p class="tip" data-t="credit"></p>
+</section>
+<section id="dock">
+  <div class="dHead"><b id="dName"></b></div>
+  <div id="tabs" role="tablist"></div>
+  <div id="opts"></div>
+  <div class="stats3">
+    <label><span>🦁 <em data-t="roar"></em></span><i><b id="stRoar"></b></i></label>
+    <label><span>👻 <em data-t="scare"></em></span><i><b id="stScare"></b></i></label>
+    <label><span>💃 <em data-t="groove"></em></span><i><b id="stGroove"></b></i></label>
+  </div>
+  <div class="row" id="lifeRow" style="display:none"><button id="btnRoar" data-t="aRoar"></button><button id="btnDance" data-t="aDance"></button><button id="btnDone" data-t="aDone"></button></div>
+  <div class="row"><button id="btnRandom" data-t="random"></button><button id="btnLever" class="main"></button></div>
+</section>
+<section id="order">
+  <div class="oTop"><span id="oFace"></span><div><b id="oWho"></b><small id="oNum"></small></div></div>
+  <p id="oSay"></p>
+  <div id="oReqs"></div>
+  <div id="oTime"><i id="oTimeFill"></i></div>
+</section>
+<div id="roarMeter" style="display:none"><div class="rmTube"><i id="rmZone"></i><i id="rmFill"></i></div><b id="rmLabel"></b><small id="rmN"></small></div>
+<button id="roarBtn" style="display:none">🦁 ROAR</button>
+<div id="lanesPad" style="display:none"><button aria-label="left door">⬅️</button><button aria-label="back door">⬆️</button><button aria-label="right door">➡️</button></div>
+<div id="dance" style="display:none"><small id="dround"></small><b id="dlab"></b><div id="dseq"></div>
+  <div id="pad"><button data-d="left">⬅️</button><button data-d="down">⬇️</button><button data-d="up">⬆️</button><button data-d="right">➡️</button></div></div>
+<section id="end" class="panel">
+  <h2 id="eTitle"></h2>
+  <div class="scoreRow"><div id="eScore" class="score">0</div><div id="eGrade" class="grade"></div></div>
+  <div id="eBest" class="best"></div>
+  <div id="eStats" class="stats"></div>
+  <label class="name"><span data-t="yourName">Your name</span><input id="eName" maxlength="18" value="Player" autocomplete="off"></label>
+  <div class="row"><button id="btnCard" data-t="card"></button><button id="btnShare" data-t="share"></button></div>
+  <div class="row"><button id="btnAgain" class="big" data-t="again"></button><button id="btnMenu" data-t="menu"></button></div>
+</section>
+<script src="js/sounds-src.js"></script>
+<script src="js/game.bundle.js"></script>
+</body>
+</html>
