@@ -285,7 +285,7 @@ canvas.addEventListener('pointerdown', e => { A.unlock(); isTouch = e.pointerTyp
   if (S.state === 'show' && C && C.kind === 'roar') { roarDown(); return; }
   if (S.state === 'show' && C && C.kind === 'scare' && isTouch) { const x = e.clientX / VW; scareLane(x < .36 ? 0 : x > .64 ? 2 : 1); return; }
   if (S.state === 'build' || S.state === 'order' || S.state === 'menu' || S.state === 'end') { drag = { x: e.clientX, az: S.az }; canvas.setPointerCapture && canvas.setPointerCapture(e.pointerId); } });
-canvas.addEventListener('pointermove', e => { if (drag) { S.az = clamp(drag.az - (e.clientX - drag.x) * .006, -1.3, 1.3); S.azT = S.gt; } });
+canvas.addEventListener('pointermove', e => { if (drag) { S.az = drag.az - (e.clientX - drag.x) * .006; S.azT = S.gt; } });
 const up = () => { drag = null; roarUp(); }; window.addEventListener('pointerup', up); window.addEventListener('pointercancel', up);
 $('roarBtn').addEventListener('pointerdown', e => { e.preventDefault(); A.unlock(); roarDown(); });
 document.querySelectorAll('#lanesPad button').forEach((b, i) => b.addEventListener('pointerdown', e => { e.preventDefault(); scareLane(i); }));
@@ -320,7 +320,7 @@ $('eName').addEventListener('keydown', e => e.stopPropagation());
 window.addEventListener('resize', resize); document.addEventListener('pointerdown', () => A.unlock(), { once: true });
 
 // ---------------- share card ----------------
-async function saveCard(share) {
+async function makeCard() {
   S.name = ($('eName').value || '').trim() || 'Player'; ls.set('mm-name', S.name); try { await document.fonts.load('700 40px Fredoka'); } catch (e) {}
   const CW = 1080, CH = 1350; renderer.setPixelRatio(1); renderer.setSize(CW, CH, false); composer.setPixelRatio(1); composer.setSize(CW, CH); bloom.strength = .22;
   const old = { a: camera.aspect, f: camera.fov, p: camera.position.clone(), q: camera.quaternion.clone() }; const h = M.size;
@@ -336,7 +336,10 @@ async function saveCard(share) {
     k.fillStyle = 'rgba(255,255,255,.14)'; k.beginPath(); k.roundRect(bx + 200, y - 12, bw - 200, 24, 12); k.fill(); k.fillStyle = ['#ff9a5a', '#b48cff', '#5fe0b0'][i]; k.beginPath(); k.roundRect(bx + 200, y - 12, Math.max(24, (bw - 200) * st[i]), 24, 12); k.fill(); });
   k.textAlign = 'center'; if (S.mode !== 'lab' && S.state === 'end') { k.font = Fo(700, 44); txt(`${S.mode === 'order' ? t('orderTitle') : t('showdown')}: ${S.score}${S.grade ? ' · ' + S.grade : ''}`, CW / 2, 990, '#ffe08a'); }
   k.font = Fo(600, 44); txt(t('cardTag'), CW / 2, 1238, '#9dffb8'); k.font = Fo(400, 32); txt(URL_TXT, CW / 2, 1292, 'rgba(255,255,255,.92)');
-  const blob = await new Promise(r => c.toBlob(r, 'image/png')); window.__mmCard = { w: c.width, h: c.height };
+  window.__mmCard = { w: c.width, h: c.height }; return c;
+}
+async function saveCard(share) {
+  const c = await makeCard(); const blob = await new Promise(r => c.toBlob(r, 'image/png'));
   const file = new File([blob], 'my-monster.png', { type: 'image/png' });
   if (share && navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], text: `Monster Maker — ${t('cardTag')} https://${URL_TXT}/` }); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'my-monster.png'; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500); toast(t('saved'));
@@ -352,12 +355,12 @@ function camTarget(dt) {
   const st = S.state, pt = portrait(), h = M ? M.size : 2, cy = SLAB_Y + h * .5, mul = pt ? 1.35 : 1; fovT = pt ? 60 : 45;
   if (st === 'menu') { const a = Math.sin(S.gt * .08) * .55 + .15; const R = (2.8 + h * .95) * mul; _v.set(Math.sin(a) * R, SLAB_Y + h * .62 + .25, Math.cos(a) * R); _l.set(0, cy + (pt ? .35 : .1), 0); }
   else if (st === 'build' || (st === 'order' && O && O.phase === 'build')) { const cat = S.cat; const head = ['head', 'horns', 'eyes', 'mouth'].includes(cat), low = cat === 'legs', back = cat === 'tail' || cat === 'wings';
-    if (S.azT === undefined || S.gt - S.azT > 6) { S.az = lerp(S.az, back ? 2.4 : st === 'order' ? (pt ? -.55 : .45) : .25, 1 - Math.exp(-dt * (back ? 1.5 : .5))); }
+    if (S.azT === undefined || S.gt - S.azT > 6) { const goal = back ? 2.94 : st === 'order' ? (pt ? -.55 : .45) : .25; S.az = goal + (((S.az - goal + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI); S.az = lerp(S.az, back ? 2.94 : st === 'order' ? (pt ? -.55 : .45) : .25, 1 - Math.exp(-dt * (back ? 1.5 : .5))); }
     const R = (head ? 2.6 + h * .85 : low ? 2.8 + h * .9 : 3.0 + h * 1.05) * mul; const ly = head ? lerp(cy, SLAB_Y + M.headY, .6) : low ? lerp(cy, SLAB_Y + M.hipY * .6, .35) : cy; _v.set(Math.sin(S.az) * R, ly + .35, Math.cos(S.az) * R); _l.set(st === 'order' ? (pt ? -.35 : -.55) : 0, ly - (pt ? -.05 : 0), 0); }
   else if (LV) { const e = S.gt - LV.t0, k = smooth(e / (LV.end || 5)); const a = lerp(-.55, .18, k); const R = lerp(3.7, 5.2, k) * mul; _v.set(Math.sin(a) * R, lerp(SLAB_Y + .5, SLAB_Y + h * .7, smooth(e / 3)), Math.cos(a) * R); _l.set(0, lerp(cy + .2, cy, k), 0); }
   else if (st === 'show' && C && C.kind === 'scare') { _v.set(Math.sin(S.gt * .1) * .3, pt ? 7.3 : 5.5, pt ? 4.6 : 5.9); _l.set(0, pt ? .2 : .5, pt ? -.9 : -1.1); fovT = pt ? 80 : 60; }
   else if (st === 'show' && C && C.kind === 'dance') { const a = Math.sin(S.gt * .35) * .45; const R = (2.9 + h * 1.0) * mul; _v.set(Math.sin(a) * R, SLAB_Y + h * .55 + .2, Math.cos(a) * R); _l.set(0, cy, 0); }
-  else if (st === 'show') { const inh = MP.inhale; const a = .18 + Math.sin(S.gt * .2) * .05; const R = (2.6 + h * .8 - inh * .9) * mul; _v.set(Math.sin(a) * R, SLAB_Y + h * .45 + .1 - inh * .2, Math.cos(a) * R); _l.set(0, cy + .1 + inh * .2, 0); }
+  else if (st === 'show') { const inh = MP.inhale; const a = .18 + Math.sin(S.gt * .2) * .05; const R = (2.9 + h * .9 - inh * .9) * mul; _v.set(Math.sin(a) * R, SLAB_Y + h * .45 + .1 - inh * .2, Math.cos(a) * R); _l.set(0, cy + .1 + inh * .2, 0); }
   else if (st === 'order') { const a = pt ? -.55 : .42; const R = (3.4 + h * 1.0) * mul; _v.set(Math.sin(a) * R, SLAB_Y + h * .6, Math.cos(a) * R); _l.set(-.8, cy - .1, .3); }
   else { const a = .3 + Math.sin(S.gt * .07) * .25; const R = (2.8 + h * 1.05) * mul; _v.set(Math.sin(a) * R, SLAB_Y + h * .6 + .2, Math.cos(a) * R); _l.set(0, cy, 0); }
   // projection window shift so panels/docks never cover the monster
@@ -386,7 +389,9 @@ function step(dt) {
     for (const c of CATS) { if (pop[c] > 0) pop[c] = Math.max(0, pop[c] - dt * 2.6); if (pop[c] > 0 && M.parts[c]) { const k = pop[c]; const s = 1 + Math.sin(k * Math.PI) * .22 * k; M.parts[c].scale.setScalar(c === 'body' ? M.parts.body.scale.x * s : s); } }
     if (pop.color > 0 || pop.pattern > 0) { const k = Math.max(pop.color || 0, pop.pattern || 0); M.mats.skin.emissive.setRGB(k * .15, k * .2, k * .12); if (!M.mats.skin.emissiveMap) M.mats.skin.emissiveIntensity = 1; } else if (!M.mats.skin.emissiveMap) M.mats.skin.emissive.setRGB(0, 0, 0); }
   camTarget(dt);
-  const k = 1 - Math.exp(-dt * (LV ? 1.4 : 2)); camPos.lerp(_v, k); look.lerp(_l, k); keepClear(camPos); camera.position.copy(camPos);
+  const k = 1 - Math.exp(-dt * (LV ? 1.4 : 2)); { // move on a circle around the slab (never straight through the middle / past the coils)
+    const a0 = Math.atan2(camPos.x, camPos.z), a1 = Math.atan2(_v.x, _v.z); let da = a1 - a0; da = ((da + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
+    const a = a0 + da * k, r = lerp(Math.hypot(camPos.x, camPos.z), Math.hypot(_v.x, _v.z), k); camPos.set(Math.sin(a) * r, lerp(camPos.y, _v.y, k), Math.cos(a) * r); if (!Number.isFinite(camPos.x + camPos.y + camPos.z)) camPos.set(0, 2.2, 6); } look.lerp(_l, k); keepClear(camPos); camera.position.copy(camPos);
   if (S.shake > .01) camera.position.add(new THREE.Vector3(rng() - .5, rng() - .5, 0).multiplyScalar(S.shake * .05)); S.shake *= Math.exp(-dt * 5);
   camera.lookAt(look); camera.updateMatrixWorld();
   updateLab(L, S.gt, dt, { leverHint: (st === 'build' && !S.alive && S.pel > 4) || (st === 'order' && O && O.phase === 'build'), shake: S.shake });
@@ -413,5 +418,5 @@ window.__mm = { S, MP, L, step: (dt, n = 1) => { for (let i = 0; i < n; i++) ste
   scare: scareLane, vill: () => vill.map(v => ({ lane: v.lane, st: v.st, rem: v.len - v.d })), dance: dancePress, beat: () => music.beat(S.gt), spb: () => music.spb,
   O: () => O && { phase: O.phase, reqs: O.reqs.slice(), met: O.reqs.filter(r => has(spec, r)).length, tLeft: O.tLeft, stars: O.stars }, has: r => has(spec, r),
   cam: () => ({ p: camera.position.toArray(), near: camera.near }), camClear: () => Math.min(...L.colliders.map(c => { _v.subVectors(camera.position, c.p); _v.y *= .45; return _v.length() - c.r; })),
-  screen: v => { _s.set(...v).project(camera); return { x: (_s.x * .5 + .5) * VW, y: (-_s.y * .5 + .5) * VH }; }, fps, card: saveCard, sparks: () => { let n = 0; for (let i = 0; i < F.n; i++) if (F.life[i] > 0) n++; return n; }, diff: () => S.diff, advance, challenge: kind => { clearVillagers(); S.state = 'show'; S.chI = ['roar', 'scare', 'dance'].indexOf(kind); C = null; startChallenge(kind); }, spawn: () => spawnVillager(), last: () => last, _dbg: { scene, camera, composer, bloom, F } };
+  screen: v => { _s.set(...v).project(camera); return { x: (_s.x * .5 + .5) * VW, y: (-_s.y * .5 + .5) * VH }; }, fps, card: saveCard, cardURL: async () => (await makeCard()).toDataURL('image/jpeg', .92), sparks: () => { let n = 0; for (let i = 0; i < F.n; i++) if (F.life[i] > 0) n++; return n; }, diff: () => S.diff, advance, challenge: kind => { clearVillagers(); S.state = 'show'; S.chI = ['roar', 'scare', 'dance'].indexOf(kind); C = null; startChallenge(kind); }, spawn: () => spawnVillager(), last: () => last, _dbg: { scene, camera, composer, bloom, F, THREE } };
 document.body.classList.add('ready');
