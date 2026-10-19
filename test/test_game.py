@@ -43,7 +43,7 @@ async def to_show(pg):  # build -> lever -> cinematic over
 async def to_menu(pg):
     if await pg.is_visible('#end.show'): await pg.click('#btnMenu')
     await pg.evaluate('__mm.step(1/30, 3)')
-BLACK = '''(n) => { const gl = __mm.renderer.getContext(), px = new Uint8Array(4); let k = 0; for (let i = 0; i < n; i++) { __mm.step(1/30); gl.readPixels(gl.drawingBufferWidth >> 1, gl.drawingBufferHeight >> 1, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); if (px[0] + px[1] + px[2] < 3) k++; } return k; }'''
+BLACK = '''(n) => { const gl = __mm.renderer.getContext(), px = new Uint8Array(4); let k = 0; for (let i = 0; i < n; i++) { __mm.step(1/30); let lit = 0; for (const [fx, fy] of [[.5, .5], [.25, .3], [.75, .3], [.25, .75], [.75, .75]]) { gl.readPixels(Math.floor(gl.drawingBufferWidth * fx), Math.floor(gl.drawingBufferHeight * fy), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); if (px[0] + px[1] + px[2] >= 3) lit++; } if (!lit) k++; } return k; }'''
 
 async def main():
     async with async_playwright() as p:
@@ -165,6 +165,9 @@ async def main():
         check('difficulty remembered', await pg.evaluate('__mm.diff()') == 'hard')
         await pg.click('#diff [data-d=easy]'); await pg.click('#btnPlay'); await pg.evaluate('__mm.step(1/30, 5)'); await to_show(pg); ze = await pg.evaluate('__mm.C().zone')
         check('easy has a wider gold zone than hard', ze[1] - ze[0] > (zh[1] - zh[0]) * 1.5, (ze, zh))
+        e0 = await pg.evaluate('(() => { for (let i = 0; i < 300 && __mm.C().phase !== "hold"; i++) { __mm.roarDown(); __mm.stepq(1/30); } __mm.stepq(1/30, 8); __mm.roarUp(); for (let i = 0; i < 300 && __mm.C().phase !== "ready"; i++) __mm.stepq(1/30); return __mm.S.gt < __mm.C().pt && __mm.C().phase === "ready"; })()'); await pg.keyboard.down('Space'); await pg.evaluate('__mm.step(1/30, 45)'); e1 = await pg.evaluate('__mm.C().phase'); await pg.keyboard.up('Space'); await pg.evaluate('__mm.step(1/30, 2)')
+        check('Space pressed before the roar is ready and held: the roar still starts', e0 and e1 == 'hold', (e0, e1))
+        await pg.evaluate('__mm.stepq(1/30, 70)')
         await pg.evaluate(f'({ROAR_BOT})(-1)'); c = await pg.evaluate('__mm.C()'); check('easy: 4 hearts, 9 villagers', c['hearts'] == 4 and c['N'] == 9, c)
         await pg.evaluate('__mm.end(); __mm.step(1/30, 3)'); await to_menu(pg); await pg.click('#diff [data-d=medium]')
         # ---- kids ----

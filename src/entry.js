@@ -96,7 +96,7 @@ function leverStep(dt) {
   if (!LV) return; const e = S.gt - LV.t0; L.lever = smooth(e / .35);
   if (!LV.struck) { L.charge = smooth(e / LV.strikeAt) * (LV.full ? 1 : .8); MP.twitch = L.charge * .45; if (e > LV.strikeAt * .45) L.flicker = Math.max(L.flicker, .4);
     if (rng() < dt * 14 * L.charge) { const c = L.coils[rng() < .5 ? 0 : 1]; zap(L, c.top, chestPos().add(new THREE.Vector3((rng() - .5) * .8, rng() * .8, 0)), { life: .12, amp: .4 }); A.sfx.arc(.18 + L.charge * .25); }
-    if (e >= LV.strikeAt) { LV.struck = true; strike(L, chestPos()); A.sfx.strike(); S.shake = 1.4; L.flicker = 1.6; flashScreen(.3); puff(F, chestPos(), 8, '#c8d0ff', 1.2);
+    if (e >= LV.strikeAt) { LV.struck = true; strike(L, chestPos()); A.sfx.strike(); S.shake = 1.4; L.flicker = 1.6; flashScreen(.3); puff(F, chestPos(), 4, '#c8d0ff', .75);
       sparks(F, chestPos(), Math.round(160 * QUALITY[S.q].parts), { colors: ['#ffffff', '#bcd2ff', '#7aa0ff', '#fff2a8'], speed: 5, up: 1.5, life: 1.0, grav: 4, size: .09 }); sparks(F, L.rodTip.clone(), 60, { colors: ['#ffffff', '#9fc0ff'], speed: 3.5, up: .5, life: .7, grav: 5, size: .07 }); } }
   else { const k2 = (e - LV.strikeAt); L.charge = Math.max(0, 1 - k2 * .9) * (LV.full ? 1 : .8); MP.twitch = Math.max(0, .9 - k2 * .9) * (k2 < .9 ? 1 : 0);
     MP.life = LV.fromAlive ? 1 : smooth((k2 - .25) / 1.1);
@@ -128,11 +128,11 @@ function endChallenge() { if (C.done) return; C.done = true; const rating = clam
   if (rating > .6) A.sfx.cheer(.4 + rating * .3); L.disco = 0;
   setTimer(2.4, () => { if (S.state !== 'show') return; S.chI++; if (S.chI < 3) startChallenge(['roar', 'scare', 'dance'][S.chI]); else endRun(); }); setUI(); }
 // --- roar contest ---
-function roarDown() { if (!C || C.kind !== 'roar' || C.phase !== 'ready' || S.gt < C.pt) return; C.phase = 'hold'; C.m = 0; C.ht = S.gt; A.sfx.inhale(.4); }
-function roarUp() { if (!C || C.kind !== 'roar' || C.phase !== 'hold') return; roarResult(C.m, false); }
+function roarDown() { S.rHeld = true; if (!C || C.kind !== 'roar' || C.phase !== 'ready' || S.gt < C.pt) return; C.phase = 'hold'; C.m = 0; C.ht = S.gt; A.sfx.inhale(.4); }
+function roarUp() { S.rHeld = false; if (!C || C.kind !== 'roar' || C.phase !== 'hold') return; roarResult(C.m, false); }
 function roarResult(m, over) {
   const z = C.zone, inZ = !over && m >= z[0] && m <= z[1]; let pts, lab;
-  if (over) { pts = 40; lab = t('r_over'); A.sfx.fizzle(); act('flinch', .8); }
+  if (over) { S.rHeld = false; pts = 40; lab = t('r_over'); A.sfx.fizzle(); act('flinch', .8); }
   else { const prec = inZ ? 1 - Math.abs(m - (z[0] + z[1]) / 2) / ((z[1] - z[0]) / 2 + 1e-6) : 0; pts = inZ ? Math.round(260 + 140 * clamp(prec, 0, 1)) : Math.round(240 * m * m);
     lab = inZ ? (prec > .6 ? t('r_mon') : t('r_great')) : m > .45 ? t('r_ok') : t('r_weak'); const k = clamp(m, .2, 1);
     act('roar', 1.1 + k * .8); A.sfx.roar(spec.head, M.size, k); S.shake = Math.max(S.shake, k * (inZ ? 1.3 : .6)); L.flicker = inZ ? .8 : 0;
@@ -142,7 +142,7 @@ function roarResult(m, over) {
   C.phase = 'result'; C.m = m; C.rt = S.gt; MP.inhale = 0;
 }
 function roarStep(dt) { const d = D();
-  if (C.phase === 'ready') { MP.inhale = lerp(MP.inhale, 0, 1 - Math.exp(-dt * 6)); if (S.gt > C.pt + 7) roarResult(0, false); }
+  if (C.phase === 'ready') { MP.inhale = lerp(MP.inhale, 0, 1 - Math.exp(-dt * 6)); if (S.rHeld && S.gt >= C.pt) roarDown(); /* a press held from before 'ready' counts */ if (S.gt > C.pt + 7) roarResult(0, false); }
   else if (C.phase === 'hold') { C.m += dt * d.rs * (.42 + 1.05 * C.m); if (d.cap) C.m = Math.min(C.m, d.cap); MP.inhale = clamp(C.m, 0, 1); if (rng() < dt * 3) A.sfx.inhale(C.m); if (C.m > 1.0) roarResult(1.0, true); }
   else if (C.phase === 'result' && S.gt - C.rt > 2.1) { C.n++; if (C.n >= 3) endChallenge(); else { C.phase = 'ready'; C.pt = S.gt + .3; C.m = 0; } }
   const mt = $('rmFill'); mt.style.height = (clamp(C.phase === 'hold' ? C.m : C.phase === 'result' ? C.m : 0, 0, 1) * 100) + '%'; $('rmZone').style.bottom = (C.zone[0] * 100) + '%'; $('rmZone').style.height = ((Math.min(1, C.zone[1]) - C.zone[0]) * 100) + '%';
@@ -392,7 +392,8 @@ function step(dt) {
   const k = 1 - Math.exp(-dt * (LV ? 1.4 : 2)); { // move on a circle around the slab (never straight through the middle / past the coils)
     const a0 = Math.atan2(camPos.x, camPos.z), a1 = Math.atan2(_v.x, _v.z); let da = a1 - a0; da = ((da + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
     const a = a0 + da * k, r = lerp(Math.hypot(camPos.x, camPos.z), Math.hypot(_v.x, _v.z), k); camPos.set(Math.sin(a) * r, lerp(camPos.y, _v.y, k), Math.cos(a) * r); if (!Number.isFinite(camPos.x + camPos.y + camPos.z)) camPos.set(0, 2.2, 6); } look.lerp(_l, k); keepClear(camPos); camera.position.copy(camPos);
-  if (S.shake > .01) camera.position.add(new THREE.Vector3(rng() - .5, rng() - .5, 0).multiplyScalar(S.shake * .05)); S.shake *= Math.exp(-dt * 5);
+  if (window.__mmCam) { const o = window.__mmCam; camPos.set(...o.p); look.set(...o.l); camera.position.copy(camPos); if (o.fov) { camera.fov = o.fov; camera.updateProjectionMatrix(); } } // scripted camera (video opening only)
+  if (S.shake > .01) camera.position.lerp(look, Math.min(.1, S.shake * .055)); S.shake *= Math.exp(-dt * 5); // impact = smooth scale punch toward the monster, never a jittery screen shake
   camera.lookAt(look); camera.updateMatrixWorld();
   updateLab(L, S.gt, dt, { leverHint: (st === 'build' && !S.alive && S.pel > 4) || (st === 'order' && O && O.phase === 'build'), shake: S.shake });
   bloom.strength = (st === 'menu' || st === 'end' ? .2 : .3) * QUALITY[S.q].bloom;
@@ -413,8 +414,10 @@ function advance(now) { const dt = Math.max(0, (now - last) / 1000) || 0; last =
 function frameLoop(now) { advance(now); render(); requestAnimationFrame(frameLoop); }
 requestAnimationFrame(frameLoop);
 window.__mm = { S, MP, L, step: (dt, n = 1) => { for (let i = 0; i < n; i++) step(dt); render(); }, stepq: (dt, n = 1) => { for (let i = 0; i < n; i++) step(dt); }, log: A.log, quality: q => q ? applyQuality(q, true) : S.q, renderer, start, end: endRun, toMenu,
+  bolt: (smoke = true) => { strike(L, chestPos()); A.sfx.strike(); S.shake = 1.4; L.flicker = 1.6; flashScreen(.3); if (smoke) puff(F, chestPos(), 8, '#c8d0ff', 1.2); sparks(F, chestPos(), Math.round(160 * QUALITY[S.q].parts), { colors: ['#ffffff', '#bcd2ff', '#7aa0ff', '#fff2a8'], speed: 5, up: 1.5, life: 1.0, grav: 4, size: .09 }); sparks(F, L.rodTip.clone(), 60, { colors: ['#ffffff', '#9fc0ff'], speed: 3.5, up: .5, life: .7, grav: 5, size: .07 }); },
+  wake: () => { act('roar', 1.7); A.sfx.roar(spec.head, M.size, 1); A.play('choir_swell', .5, 1, 0, .6); S.shake = Math.max(S.shake, .9); }, play: A.play, chest: () => chestPos().toArray(), headY: () => SLAB_Y + (M ? M.headY : 2),
   pull: pullLever, set: changePart, spec: () => ({ ...spec }), setSpec: s => setSpec(s, 'all'), randomize, stats: () => stats(spec), name: () => monsterName(spec, S.lang), M: () => M, LV: () => LV,
-  roarDown, roarUp, C: () => C && { kind: C.kind, phase: C.phase, m: C.m, zone: C.zone, n: C.n, pts: C.pts, done: C.done, hearts: C.hearts, range: C.range, scared: C.scared, spawned: C.spawned, N: C.n, seq: C.seq, k: C.k, res: C.res, respB: C.respB, callB: C.callB, r: C.r, win: C.win },
+  roarDown, roarUp, C: () => C && { kind: C.kind, phase: C.phase, pt: C.pt, m: C.m, zone: C.zone, n: C.n, pts: C.pts, done: C.done, hearts: C.hearts, range: C.range, scared: C.scared, spawned: C.spawned, N: C.n, seq: C.seq, k: C.k, res: C.res, respB: C.respB, callB: C.callB, r: C.r, win: C.win },
   scare: scareLane, vill: () => vill.map(v => ({ lane: v.lane, st: v.st, rem: v.len - v.d })), dance: dancePress, beat: () => music.beat(S.gt), spb: () => music.spb,
   O: () => O && { phase: O.phase, reqs: O.reqs.slice(), met: O.reqs.filter(r => has(spec, r)).length, tLeft: O.tLeft, stars: O.stars }, has: r => has(spec, r),
   cam: () => ({ p: camera.position.toArray(), near: camera.near }), camClear: () => Math.min(...L.colliders.map(c => { _v.subVectors(camera.position, c.p); _v.y *= .45; return _v.length() - c.r; })),

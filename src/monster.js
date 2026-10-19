@@ -28,7 +28,7 @@ export function stats(spec) { const v = [0, 0, 0]; for (const c of CATS) { const
 export const DEFAULT_SPEC = { head: 'bolt', horns: 'none', eyes: 'two', mouth: 'stitched', body: 'brute', arms: 'claws', legs: 'stompers', tail: 'none', wings: 'none', color: 'green', pattern: 'stitches' };
 export function randomSpec(R = Math.random) { const s = {}; for (const c of CATS) { const L = PARTS[c]; let p = L[Math.floor(R() * L.length)]; if ((c === 'wings' || c === 'tail' || c === 'horns') && R() < .25) p = L[0]; s[c] = p.id; } return s; }
 // fun, part-based monster names (no real people)
-const N1 = { bolt: ['Volt', 'Sparky', 'Boltz'], round: ['Blub', 'Gloop', 'Bobo'], pumpkin: ['Gourd', 'Pumpo', 'Jack-o'], dragon: ['Drako', 'Scorch', 'Fang'], alien: ['Zorb', 'Quark', 'Bleep'], bat: ['Flitter', 'Nyx', 'Squeak'] };
+const N1 = { bolt: ['Volt', 'Sparky', 'Boltz'], round: ['Blub', 'Gloop', 'Bobo'], pumpkin: ['Gourd', 'Pumpo', 'Jacko'], dragon: ['Drako', 'Scorch', 'Fang'], alien: ['Zorb', 'Quark', 'Bleep'], bat: ['Flitter', 'Nyx', 'Squeak'] };
 const N2 = { claws: 'claw', muscle: 'crusher', stubby: 'hugger', tentacles: 'tangle', pincers: 'snapper' };
 const N3 = { stompers: 'the Stomper', chicken: 'the Strutter', spider: 'the Creeper', stubby: 'the Waddler', tentacle: 'the Slitherer' };
 export function monsterName(spec, lang = 'en') { const a = N1[spec.head] || N1.bolt; const i = (spec.color.length + spec.eyes.length + spec.mouth.length) % a.length;
