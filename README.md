@@ -2,7 +2,7 @@
 
 A cinematic 3D Halloween game. Midnight in a mad-scientist lab at the top of a gothic tower: Tesla coils hum, flasks bubble, rain lashes the windows and lightning flickers across the storm sky. On the stone slab lies your creation. Build it from mix-and-match 3D parts, pull the big lever and bring it to life. Then let it compete in the **Monster Showdown** or fill **Monster Orders** for the villagers against the clock.
 
-**Play:** https://frank-otto.github.io/monster-maker/
+**Play:** [online version (GitHub Pages)](https://frank-otto.github.io/monster-maker/)
 
 ## How to play
 - **Build:** 11 part categories: head, horns, eyes, mouth, body, arms, legs, tail, wings, colour and pattern. That gives 6 heads (bolt-neck, round, pumpkin, dragon, alien, bat), spider and tentacle legs, bat, dragon and bug wings, scorpion tails, 8 colours, glowing patterns, and more than 60 parts in total. Every part changes your monster's **Roar / Scare / Groove** stats, and every monster gets a name ("Voltclaw the Stomper"). Drag to look around. The camera focuses on the part you are editing. 🎲 Random rolls a whole new monster.
