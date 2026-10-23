@@ -17,7 +17,7 @@ A cinematic 3D Halloween game. Midnight in a mad-scientist lab at the top of a g
 Difficulty **Easy / Medium / Hard** sets the gold zone, the number of villagers and hearts, the dance timing, the number of order wishes and the time limit. A highscore is kept per mode and difficulty. **Kids mode** can never fail: the roar cannot overcharge, villagers only tickle, wishes are simple with no timer, and the grade is always at least B.
 
 Extras:
-- English by default, with a **DE** toggle that is remembered.
+- the language follows your phone or browser (German devices get German, everything else English), with a small **DE/EN** toggle that is remembered.
 - A shareable **monster card** (PNG, 1080×1350, default name "Player").
 - **Quality levels** (Low / Normal / High / Ultra) with a careful auto step-down.
 - Phone portrait layout with touch controls.
@@ -36,6 +36,7 @@ Open `index.html` (on a Mac you can also double-click `start.command`). Rebuild 
 
 ## Tests
 `python3 test/test_game.py` (Playwright + Chrome, headless WebGL, served over a local web server) covers:
+`python3 test/test_mobile.py`: 8 phone configurations (iPhone 13 / 8 / SE in WebKit, Pixel 7 in Chromium, portrait and landscape). It checks that every button is tappable and at least 44 px, that nothing is cut off or scrolls, the auto language, one tap to play with sound, touch control and flat memory.
 - every part option, stats and names, keyboard and touch input;
 - the lever cinematic, all three challenges, orders, Free Lab, difficulties and Kids mode;
 - highscores, the PNG card and EN/DE memory;

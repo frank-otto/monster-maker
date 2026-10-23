@@ -118,3 +118,62 @@ body[data-mode=lab] .score { font-size: 30px; line-height: 1.2; }
 @keyframes vm { 50% { opacity: .55; } }
 body:not([data-ch=scare]) #vmarks { display: none; }
 @media (max-width: 819px) { body[data-state=show] #btnQ, body[data-state=order] #btnQ { display: none; } body[data-state=show] #hModeBox { display: none; } }
+
+/* ---------- phone standard (23.10): 44 px touch targets, nothing cut off or scrolling, hidden = visibility:hidden ---------- */
+.pill { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+#btnQuit { display: none; } body[data-state=build] #btnQuit, body[data-state=show] #btnQuit, body[data-state=order] #btnQuit { display: inline-flex; }
+.panel button, .panel #diff button, .panel .toggle, #dock .row button { min-height: 44px; }
+.panel #diff button { min-width: 64px; }
+.name input { min-height: 44px; }
+#tabs button, #opts button { min-height: 44px; min-width: 44px; }
+body[data-state=menu] #hud, body[data-state=end] #hud { visibility: hidden; }
+#hud { transition: opacity .3s, visibility 0s; }
+#flash { visibility: hidden; } #flash.on { visibility: visible; }
+#toast { visibility: hidden; transition: opacity .3s, visibility 0s linear .3s; } #toast.show { visibility: visible; transition: opacity .3s, visibility 0s; }
+#hint { visibility: hidden; transition: opacity .4s, visibility 0s linear .4s; } #hint.show { visibility: visible; transition: opacity .4s, visibility 0s; }
+body[data-state=menu] #hint, body[data-state=end] #hint { visibility: hidden; }
+#dock, #order { visibility: hidden; transition: opacity .25s, transform .25s, visibility 0s linear .25s; } #dock.show, #order.show { visibility: visible; transition: opacity .25s, transform .25s, visibility 0s; }
+.panel { overflow: hidden; }
+@media (max-width: 819px), (orientation: portrait) {
+  .pill { padding: 6px 10px; font-size: 13px; }
+  #menu.panel, #end.panel { max-height: calc(100dvh - 72px); }
+  #tabs { grid-template-columns: repeat(6, 1fr); gap: 4px; } #tabs button { padding: 2px 0; }
+  #opts { grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)); gap: 4px; }
+  #dock { max-height: calc(100dvh - 70px); overflow: hidden; }
+  #hud { top: calc(max(10px, env(safe-area-inset-top)) + 50px); } #hint { top: calc(max(10px, env(safe-area-inset-top)) + 100px); }
+  #order { top: calc(max(10px, env(safe-area-inset-top)) + 54px); }
+}
+@media (max-height: 700px) and (orientation: portrait) {
+  #menu h1 { font-size: 30px; } .sub { font-size: 13px; margin: 2px 0 6px; } .panel button.big { font-size: 18px; padding: 7px 9px; margin: 4px 0 6px; } .panel button.big small { font-size: 11.5px; }
+  .panel { padding: 10px 12px 8px; } #menu .tip { font-size: 11.5px; margin: 3px 0 0; }
+  .dHead b { font-size: 14px; margin-bottom: 3px; } .stats3 { margin: 2px 2px 4px; }
+  #end .score { font-size: 48px; } #end .stats { margin: 4px 0 6px; }
+}
+@media (max-height: 600px) and (orientation: portrait) { #menu .tip[data-t=credit], #menu .sub { display: none; } #opts small { font-size: 9px; } }
+@media (max-height: 500px) and (orientation: landscape) {
+  #menu.panel, #end.panel { top: calc(50% + 4px); bottom: auto; max-height: calc(100dvh - 12px); width: min(64vw, 560px); padding: 8px 12px; display: grid; grid-template-columns: 1fr 1.25fr; column-gap: 12px; align-items: center; align-content: center; transform: translate(-50%, -48%) scale(.96); }
+  #menu.panel.show, #end.panel.show { transform: translate(-50%, -50%) scale(1); }
+  #menu > * { grid-column: 1; } #menu > button.big, #menu > #diff, #menu > .row { grid-column: 2; }
+  #menu > h1 { grid-row: 1 / 3; font-size: 28px; } #menu > .sub { grid-row: 3 / 5; font-size: 12px; margin: 0; } #menu .tip { display: none; }
+  #menu > #btnPlay { grid-row: 1; } #menu > #btnOrder { grid-row: 2; } #menu > #diff { grid-row: 3; margin: 2px 0; } #menu > .row { grid-row: 4; }
+  .panel button.big { margin: 3px 0; padding: 5px 9px; font-size: 17px; } .panel button.big small { font-size: 11px; line-height: 1.2; }
+  #end > * { grid-column: 1; } #end > .name, #end > .row { grid-column: 2; } #end > .name { grid-row: 1 / 3; margin: 0; } #end > .row { margin: 0; }
+  #end h2 { font-size: 20px; } #end .score { font-size: 40px; } #end .best { font-size: 13px; margin: 0; } #end .stats { margin: 2px 0; font-size: 12px; } #end .row button { margin: 3px; }
+  #dock { left: auto; right: 8px; top: calc(50% + 26px); bottom: auto; width: min(52vw, 420px); max-height: calc(100dvh - 64px); transform: translate(20px, -50%); }
+  #dock.show { transform: translate(0, -50%); } .stats3 { display: none; } .dHead b { font-size: 13px; margin-bottom: 2px; }
+  #order { top: calc(max(8px, env(safe-area-inset-top)) + 50px); left: 8px; transform: none; width: min(44vw, 340px); } #order.show { transform: none; }
+  #dance { bottom: 6px; } #dance #dseq { margin: 2px 0; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  #menu.panel, #end.panel { left: 8px; width: min(60vw, 560px); transform: translate(0, -48%) scale(.96); } #menu.panel.show, #end.panel.show { transform: translate(0, -50%) scale(1); }
+  #dock { left: 8px; right: auto; top: 8px; bottom: 8px; width: min(56vw, 400px); max-height: none; padding: 6px 8px; transform: translateX(-20px); display: flex; flex-direction: column; justify-content: center; }
+  #dock.show { transform: none; } #dock #opts { grid-template-columns: repeat(6, 1fr); margin: 4px 0; } #dock .row button { margin: 2px; }
+  body[data-state=build] #hud { visibility: hidden; opacity: 0; }
+  #end .grade { font-size: 32px; } #end .scoreRow { gap: 8px; } #end > h2 { margin: 0; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  #menu.panel, #end.panel { width: min(calc(100vw - 206px), 560px); grid-template-columns: minmax(0, .8fr) minmax(0, 1.3fr); }
+  #menu > button.big, #menu > #diff { width: 100%; box-sizing: border-box; } #diff button { min-width: 0; padding-left: 4px; padding-right: 4px; }
+}
+@media (max-height: 500px) and (orientation: landscape) { #menu > #diff { display: flex; gap: 4px; } #menu > #diff button { flex: 1 1 0; margin: 0; } }
+@media (max-height: 500px) and (orientation: landscape) { #menu > .row button { font-size: 13px; padding: 4px 8px; white-space: nowrap; margin: 2px; } #menu > #btnPlay, #menu > #btnOrder { margin: 2px 0 4px; } }

@@ -5,7 +5,7 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { createLab, updateLab, zap, strike, windowBolt, QUALITY, RR, HH, SLAB_Y, DOORS } from './lab.js';
 import { CATS, CAT_EMO, PARTS, part, stats, buildMonster, disposeMonster, animateMonster, randomSpec, DEFAULT_SPEC, monsterName, has } from './monster.js';
-import { createVillager, animateVillager, CUSTOMERS } from './villagers.js';
+import { createVillager, animateVillager, disposeVillager, CUSTOMERS } from './villagers.js';
 import { createFX, sparks, puff, updateFX } from './fx.js';
 import { Player, Seq, toccataEvents } from './music.js';
 import * as A from './audio.js';
@@ -24,8 +24,10 @@ const DIFF = {
   kids: { zone: [.5, 1.01], rs: .72, cap: .97, scareN: 8, gap: 2.9, spd: .6, hearts: 0, dance: [2, 3, 3], win: [.22, .38], orderN: 4, orderT: 0, reqN: 2, failO: 99 }
 };
 const DIRS = ['left', 'down', 'up', 'right'], DIR_EMO = { left: '⬅️', down: '⬇️', up: '⬆️', right: '➡️' }, DIR_COL = { left: '#c79bff', down: '#5fd3ff', up: '#7dffb4', right: '#ffb65e' };
+// language follows the phone/browser (German devices → DE, else EN) until the player picks one with the DE/EN toggle
+function autoLang() { try { const l = (navigator.languages && navigator.languages[0]) || navigator.language || ''; return /^de\b/i.test(l) ? 'de' : 'en'; } catch (e) { return 'en'; } }
 const S = {
-  state: 'menu', mode: 'show', lang: ls.get('mm-lang', 'en'), diff: ls.get('mm-diff', 'medium'), kids: ls.get('mm-kids', '0') === '1', q: ls.get('mm-q', ''), qUser: !!ls.get('mm-q', ''),
+  state: 'menu', mode: 'show', lang: (ls.get('mm-lang', '') || autoLang()), diff: ls.get('mm-diff', 'medium'), kids: ls.get('mm-kids', '0') === '1', q: ls.get('mm-q', ''), qUser: !!ls.get('mm-q', ''),
   name: ls.get('mm-name', 'Player') || 'Player', cat: 'head', az: .25, gt: 0, pel: 0, score: 0, shake: 0, newBest: false, failed: false, grade: '', alive: false, results: [], vx: 0, vy: 0
 };
 if (!DIFF[S.diff] || S.diff === 'kids') S.diff = 'medium';
@@ -109,7 +111,7 @@ function afterAlive(was) {
   if (S.mode === 'show') { beginShow(); return; }
   showDock(); renderDock(); // free lab: keep building with a living monster
 }
-function flashScreen(k) { const el = $('flash'); el.style.transition = 'none'; el.style.opacity = Math.min(.3, k); void el.offsetWidth; el.style.transition = 'opacity .7s ease-out'; el.style.opacity = 0; }
+function flashScreen(k) { const el = $('flash'); el.classList.add('on'); clearTimeout(flashScreen._t); flashScreen._t = setTimeout(() => el.classList.remove('on'), 750); el.style.transition = 'none'; el.style.opacity = Math.min(.3, k); void el.offsetWidth; el.style.transition = 'opacity .7s ease-out'; el.style.opacity = 0; }
 
 // ---------------- Monster Showdown ----------------
 let C = null; const vill = []; const _s = new THREE.Vector3();
@@ -171,7 +173,7 @@ function scareStep(dt) {
     el.style.display = off ? '' : 'none'; if (!off) return; let x = _s.z > 1 ? -_s.x : _s.x, y = _s.z > 1 ? -_s.y : _s.y; const m = Math.max(Math.abs(x), Math.abs(y)) || 1; x /= m; y /= m; el.style.left = clamp((x * .5 + .5) * VW, 30, VW - 30) + 'px'; el.style.top = clamp((-y * .5 + .5) * VH, 80, VH - 120) + 'px'; el.textContent = v.P.flame ? '🔥' : '🔱'; el.className = v.len - v.d <= C.range ? 'hot' : ''; });
   document.querySelectorAll('#lanesPad button').forEach((b, i) => b.classList.toggle('warn', vill.some(v => v.lane === i && v.st === 'walk' && v.len - v.d <= C.range)));
 }
-function clearVillagers() { for (const v of vill) scene.remove(v.P.g); vill.length = 0; $('vmarks').innerHTML = ''; L.doors.forEach(d => d.target = 0); }
+function clearVillagers() { for (const v of vill) disposeVillager(v.P); vill.length = 0; $('vmarks').innerHTML = ''; L.doors.forEach(d => d.target = 0); }
 function mobWins() { C.done = true; S.failed = true; A.sfx.fail(); banner(t('mobWins')); act('sad', 2.2); setTimer(2.6, () => endRun()); }
 // --- dance-off (call & response on the beat) ---
 function nextRound() { C.r++; if (C.r >= C.rounds.length) { C.phase = 'finale'; act('spin', 1.1); setTimer(1.1, () => act('cheer', 1.6)); A.sfx.cheer(.55); setTimer(2.2, () => endChallenge()); return; }
@@ -204,7 +206,7 @@ function genReqs(n) { const simple = ['color:red', 'color:blue', 'color:purple',
   return out; }
 function nextOrder() {
   const d = D(); if (S.orderI >= d.orderN) { endRun(); return; }
-  const def = CUSTOMERS[(S.orderI * 3 + Math.floor(rng() * 7)) % CUSTOMERS.length]; if (cust) scene.remove(cust.g); cust = createVillager(def, L.flameT); cust.def = def; scene.add(cust.g);
+  const def = CUSTOMERS[(S.orderI * 3 + Math.floor(rng() * 7)) % CUSTOMERS.length]; if (cust) disposeVillager(cust); cust = createVillager(def, L.flameT); cust.def = def; scene.add(cust.g);
   const from = DOORS[0].clone(), to = new THREE.Vector3(-2.05, 0, 1.05); cust.g.position.copy(from); L.doors[0].target = 1; A.sfx.door();
   O = { def, reqs: genReqs(d.reqN), t0: S.gt, phase: 'arrive', from, to, tLimit: d.orderT, tLeft: d.orderT, met: 0 }; S.alive = false; MP.life = 0;
   renderOrder(); $('order').classList.add('show'); hideDock(); setUI();
@@ -231,16 +233,16 @@ function renderOrder() { if (!O) return; const def = O.def; $('oFace').textConte
 function renderTimer() { const el = $('oTime'); if (!O || !O.tLimit) { el.style.display = 'none'; return; } el.style.display = ''; $('oTimeFill').style.width = (O.tLeft / O.tLimit * 100) + '%'; $('oTimeFill').classList.toggle('low', O.tLeft < 8); }
 
 // ---------------- flow: menu / build / end ----------------
-function start(mode) { A.unlock(); clearTimers(); clearVillagers(); seq.clear(); LV = null; L.lever = 0; L.charge = 0; L.disco = 0; C = null; O = null; if (cust) { scene.remove(cust.g); cust = null; }
+function start(mode) { A.unlock(); clearTimers(); clearVillagers(); seq.clear(); LV = null; L.lever = 0; L.charge = 0; L.disco = 0; C = null; O = null; if (cust) { disposeVillager(cust); cust = null; }
   S.mode = mode; S.score = 0; S.failed = false; S.newBest = false; S.results = []; S.grade = ''; S.pel = 0; window.__banners = [];
   $('end').classList.remove('show'); $('menu').classList.remove('show'); $('order').classList.remove('show');
   if (mode === 'order') { startOrder(); return; }
   S.state = 'build'; S.alive = false; MP.life = 0; S.cat = 'head'; showDock(); renderDock(); music.start('lab', S.gt + .2); music.vol = .9; setUI(); A.sfx.ui();
   $('hint').textContent = t(isTouch ? 'h_buildT' : 'h_build'); setTimer(.6, () => $('hint').classList.add('show')); setTimer(7, () => $('hint').classList.remove('show')); }
-function toMenu() { clearTimers(); clearVillagers(); seq.clear(); LV = null; C = null; O = null; if (cust) { scene.remove(cust.g); cust = null; } L.disco = 0; L.charge = 0; L.lever = 0;
+function toMenu() { clearTimers(); clearVillagers(); seq.clear(); LV = null; C = null; O = null; if (cust) { disposeVillager(cust); cust = null; } L.disco = 0; L.charge = 0; L.lever = 0;
   S.state = 'menu'; S.alive = true; MP.life = 1; $('menu').classList.add('show'); $('end').classList.remove('show'); $('order').classList.remove('show'); hideDock(); music.start('lab', S.gt + .3); music.vol = .6; setUI(); applyLang(); }
 function endRun() {
-  if (S.state === 'end') return; clearVillagers(); seq.clear(); LV = null; L.disco = 0; L.charge = 0; L.lever = 0; if (cust) { scene.remove(cust.g); cust = null; } $('order').classList.remove('show'); hideDock();
+  if (S.state === 'end') return; clearVillagers(); seq.clear(); LV = null; L.disco = 0; L.charge = 0; L.lever = 0; if (cust) { disposeVillager(cust); cust = null; } $('order').classList.remove('show'); hideDock();
   const prev = S.state; S.state = 'end'; MP.life = Math.max(MP.life, S.mode === 'lab' ? 1 : MP.life); if (S.mode !== 'lab') { MP.life = 1; S.alive = true; }
   let ratio = 0; if (S.mode === 'show') ratio = S.results.reduce((a, r) => a + r.rating, 0) / 3; else if (S.mode === 'order') ratio = S.stars / (3 * D().orderN);
   let g = S.mode === 'lab' ? '' : ratio >= .88 ? 'S' : ratio >= .74 ? 'A' : ratio >= .58 ? 'B' : ratio >= .4 ? 'C' : 'D'; if (S.failed && !S.kids) g = 'D'; if (S.kids && g && 'CD'.includes(g)) g = 'B'; S.grade = g;
@@ -413,7 +415,7 @@ let last = performance.now();
 function advance(now) { const dt = Math.max(0, (now - last) / 1000) || 0; last = Math.max(last, now || 0); if (!window.__mmManual) { step(dt); fpsTick(dt); } return dt; } // rAF stamps can be earlier than the last one: never run the clock backwards
 function frameLoop(now) { advance(now); render(); requestAnimationFrame(frameLoop); }
 requestAnimationFrame(frameLoop);
-window.__mm = { S, MP, L, step: (dt, n = 1) => { for (let i = 0; i < n; i++) step(dt); render(); }, stepq: (dt, n = 1) => { for (let i = 0; i < n; i++) step(dt); }, log: A.log, quality: q => q ? applyQuality(q, true) : S.q, renderer, start, end: endRun, toMenu,
+window.__mm = { S, audioState: () => A.audioState(), MP, L, step: (dt, n = 1) => { for (let i = 0; i < n; i++) step(dt); render(); }, stepq: (dt, n = 1) => { for (let i = 0; i < n; i++) step(dt); }, log: A.log, quality: q => q ? applyQuality(q, true) : S.q, renderer, start, end: endRun, toMenu,
   bolt: (smoke = true) => { strike(L, chestPos()); A.sfx.strike(); S.shake = 1.4; L.flicker = 1.6; flashScreen(.3); if (smoke) puff(F, chestPos(), 8, '#c8d0ff', 1.2); sparks(F, chestPos(), Math.round(160 * QUALITY[S.q].parts), { colors: ['#ffffff', '#bcd2ff', '#7aa0ff', '#fff2a8'], speed: 5, up: 1.5, life: 1.0, grav: 4, size: .09 }); sparks(F, L.rodTip.clone(), 60, { colors: ['#ffffff', '#9fc0ff'], speed: 3.5, up: .5, life: .7, grav: 5, size: .07 }); },
   wake: () => { act('roar', 1.7); A.sfx.roar(spec.head, M.size, 1); A.play('choir_swell', .5, 1, 0, .6); S.shake = Math.max(S.shake, .9); }, play: A.play, chest: () => chestPos().toArray(), headY: () => SLAB_Y + (M ? M.headY : 2),
   pull: pullLever, set: changePart, spec: () => ({ ...spec }), setSpec: s => setSpec(s, 'all'), randomize, stats: () => stats(spec), name: () => monsterName(spec, S.lang), M: () => M, LV: () => LV,

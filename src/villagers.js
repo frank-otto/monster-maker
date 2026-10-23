@@ -58,3 +58,5 @@ export function animateVillager(P, dt, mood = 'idle', k = 1) {
   if (P.mouth) P.mouth.scale.set(1, mood === 'flee' || mood === 'scared' ? -2.2 : mood === 'grumpy' ? -1 : 1, 1);
   if (P.flame) { const f = .85 + Math.sin(t * 13) * .1; P.flame.scale.set(.26 * f, .5 * (2 - f), 1); }
 }
+// Free a villager's GPU buffers when it leaves the scene (geometries + its own materials; shared textures such as the torch flame stay).
+export function disposeVillager(P) { if (!P || !P.g) return; if (P.g.parent) P.g.parent.remove(P.g); const ms = new Set(); P.g.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => ms.add(m)); }); ms.forEach(m => m.dispose()); }
